@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import SwiftData
 
 /**
  * This file acts as a mock database for temporary data storage, providing CRUD functionality.
@@ -8,6 +9,8 @@ import SwiftUI
 
 @Observable
 final class Storage {
+    private let modelContext: ModelContext
+    
   enum Error: LocalizedError {
     case ingredientExists
     case categoryExists
@@ -25,234 +28,174 @@ final class Storage {
     }
   }
 
-  init() {}
+    init(context: ModelContext) {
+        modelContext = context
+    }
 
-  private(set) var ingredients: [MockIngredient] = []
-  private(set) var categories: [MockCategory] = []
-  private(set) var recipes: [MockRecipe] = []
+    // Fetch Ingredients
+    func fetchIngredients() -> [Ingredient] {
+        let fetchDescriptor = FetchDescriptor<Ingredient>(sortBy: [SortDescriptor(\.name)])
+        return (try? modelContext.fetch(fetchDescriptor)) ?? []
+    }
 
+    // Fetch Categories
+    func fetchCategories() -> [Category] {
+        let fetchDescriptor = FetchDescriptor<Category>(sortBy: [SortDescriptor(\.name)])
+        return (try? modelContext.fetch(fetchDescriptor)) ?? []
+    }
+
+    // Fetch Recipes
+    func fetchRecipes() -> [Recipe] {
+        let fetchDescriptor = FetchDescriptor<Recipe>(sortBy: [SortDescriptor(\.name)])
+        return (try? modelContext.fetch(fetchDescriptor)) ?? []
+    }
+    
   // MARK: - Load
 
-  func load() {
-    let pizzaDough = MockIngredient(name: "Pizza Dough")
-    let tomatoSauce = MockIngredient(name: "Tomato Sauce")
-    let mozzarellaCheese = MockIngredient(name: "Mozzarella Cheese")
-    let freshBasilLeaves = MockIngredient(name: "Fresh Basil Leaves")
-    let extraVirginOliveOil = MockIngredient(name: "Extra Virgin Olive Oil")
-    let salt = MockIngredient(name: "Salt")
-    let chickpeas = MockIngredient(name: "Chickpeas")
-    let tahini = MockIngredient(name: "Tahini")
-    let lemonJuice = MockIngredient(name: "Lemon Juice")
-    let garlic = MockIngredient(name: "Garlic")
-    let cumin = MockIngredient(name: "Cumin")
-    let water = MockIngredient(name: "Water")
-    let paprika = MockIngredient(name: "Paprika")
-    let parsley = MockIngredient(name: "Parsley")
-    let spaghetti = MockIngredient(name: "Spaghetti")
-    let eggs = MockIngredient(name: "Eggs")
-    let parmesanCheese = MockIngredient(name: "Parmesan Cheese")
-    let pancetta = MockIngredient(name: "Pancetta")
-    let blackPepper = MockIngredient(name: "Black Pepper")
-    let driedChickpeas = MockIngredient(name: "Dried Chickpeas")
-    let onions = MockIngredient(name: "Onions")
-    let cilantro = MockIngredient(name: "Cilantro")
-    let coriander = MockIngredient(name: "Coriander")
-    let bakingPowder = MockIngredient(name: "Baking Powder")
-    let chickenThighs = MockIngredient(name: "Chicken Thighs")
-    let yogurt = MockIngredient(name: "Yogurt")
-    let cardamom = MockIngredient(name: "Cardamom")
-    let cinnamon = MockIngredient(name: "Cinnamon")
-    let turmeric = MockIngredient(name: "Turmeric")
+    func load() {
+        // Clear existing data to avoid duplication
+        for ingredient in fetchIngredients() {
+            modelContext.delete(ingredient)
+        }
+        for category in fetchCategories() {
+            modelContext.delete(category)
+        }
+        for recipe in fetchRecipes() {
+            modelContext.delete(recipe)
+        }
 
-    ingredients = [
-      pizzaDough,
-      tomatoSauce,
-      mozzarellaCheese,
-      freshBasilLeaves,
-      extraVirginOliveOil,
-      salt,
-      chickpeas,
-      tahini,
-      lemonJuice,
-      garlic,
-      cumin,
-      water,
-      paprika,
-      parsley,
-      spaghetti,
-      eggs,
-      parmesanCheese,
-      pancetta,
-      blackPepper,
-      driedChickpeas,
-      onions,
-      cilantro,
-      coriander,
-      bakingPowder,
-      chickenThighs,
-      yogurt,
-      cardamom,
-      cinnamon,
-      turmeric,
-    ]
+        // Add Ingredients
+        let pizzaDough = Ingredient(name: "Pizza Dough")
+        let tomatoSauce = Ingredient(name: "Tomato Sauce")
+        let mozzarellaCheese = Ingredient(name: "Mozzarella Cheese")
+        let freshBasilLeaves = Ingredient(name: "Fresh Basil Leaves")
+        let extraVirginOliveOil = Ingredient(name: "Extra Virgin Olive Oil")
+        let salt = Ingredient(name: "Salt")
+        let chickpeas = Ingredient(name: "Chickpeas")
+        let tahini = Ingredient(name: "Tahini")
+        let lemonJuice = Ingredient(name: "Lemon Juice")
+        let garlic = Ingredient(name: "Garlic")
+        let cumin = Ingredient(name: "Cumin")
+        let water = Ingredient(name: "Water")
+        let paprika = Ingredient(name: "Paprika")
+        let parsley = Ingredient(name: "Parsley")
+        let spaghetti = Ingredient(name: "Spaghetti")
+        let eggs = Ingredient(name: "Eggs")
+        let parmesanCheese = Ingredient(name: "Parmesan Cheese")
+        let pancetta = Ingredient(name: "Pancetta")
+        let blackPepper = Ingredient(name: "Black Pepper")
+        let driedChickpeas = Ingredient(name: "Dried Chickpeas")
+        let onions = Ingredient(name: "Onions")
+        let cilantro = Ingredient(name: "Cilantro")
+        let coriander = Ingredient(name: "Coriander")
+        let bakingPowder = Ingredient(name: "Baking Powder")
+        let chickenThighs = Ingredient(name: "Chicken Thighs")
+        let yogurt = Ingredient(name: "Yogurt")
+        let cardamom = Ingredient(name: "Cardamom")
+        let cinnamon = Ingredient(name: "Cinnamon")
+        let turmeric = Ingredient(name: "Turmeric")
 
-    var italian = MockCategory(name: "Italian")
-    var middleEastern = MockCategory(name: "Middle Eastern")
+        // Add Categories
+        let italian = Category(name: "Italian")
+        let middleEastern = Category(name: "Middle Eastern")
 
-    let margherita = MockRecipe(
-      name: "Classic Margherita Pizza",
-      summary: "A simple yet delicious pizza with tomato, mozzarella, basil, and olive oil.",
-      category: italian,
-      serving: 4,
-      time: 50,
-      ingredients: [
-        MockRecipeIngredient(ingredient: pizzaDough, quantity: "1 ball"),
-        MockRecipeIngredient(ingredient: tomatoSauce, quantity: "1/2 cup"),
-        MockRecipeIngredient(ingredient: mozzarellaCheese, quantity: "1 cup, shredded"),
-        MockRecipeIngredient(ingredient: freshBasilLeaves, quantity: "A handful"),
-        MockRecipeIngredient(ingredient: extraVirginOliveOil, quantity: "2 tablespoons"),
-        MockRecipeIngredient(ingredient: salt, quantity: "Pinch"),
-      ],
-      instructions: "Preheat oven, roll out dough, apply sauce, add cheese and basil, bake for 20 minutes.",
-      imageData: UIImage(named: "margherita")?.pngData()
-    )
+        // Add Recipes
+        let margherita = Recipe(
+            name: "Classic Margherita Pizza",
+            summary: "A simple yet delicious pizza with tomato, mozzarella, basil, and olive oil.",
+            category: italian,
+            serving: 4,
+            time: 50,
+            ingredients: [
+                RecipeIngredient(ingredient: pizzaDough, quantity: "1 ball"),
+                RecipeIngredient(ingredient: tomatoSauce, quantity: "1/2 cup"),
+                RecipeIngredient(ingredient: mozzarellaCheese, quantity: "1 cup, shredded"),
+                RecipeIngredient(ingredient: freshBasilLeaves, quantity: "A handful"),
+                RecipeIngredient(ingredient: extraVirginOliveOil, quantity: "2 tablespoons"),
+                RecipeIngredient(ingredient: salt, quantity: "Pinch")
+            ],
+            instructions: "Preheat oven, roll out dough, apply sauce, add cheese and basil, bake for 20 minutes.",
+            imageData: UIImage(named: "margherita")?.pngData()
+        )
 
-    let spaghettiCarbonara = MockRecipe(
-      name: "Spaghetti Carbonara",
-      summary: "A classic Italian pasta dish made with eggs, cheese, pancetta, and pepper.",
-      category: italian,
-      serving: 4,
-      time: 30,
-      ingredients: [
-        MockRecipeIngredient(ingredient: spaghetti, quantity: "400g"),
-        MockRecipeIngredient(ingredient: eggs, quantity: "4"),
-        MockRecipeIngredient(ingredient: parmesanCheese, quantity: "1 cup, grated"),
-        MockRecipeIngredient(ingredient: pancetta, quantity: "200g, diced"),
-        MockRecipeIngredient(ingredient: blackPepper, quantity: "To taste"),
-      ],
-      instructions: "Cook spaghetti. Fry pancetta until crisp. Whisk eggs and Parmesan, add to pasta with pancetta, and season with black pepper.",
-      imageData: UIImage(named: "spaghettiCarbonara")?.pngData()
-    )
+        let spaghettiCarbonara = Recipe(
+            name: "Spaghetti Carbonara",
+            summary: "A classic Italian pasta dish made with eggs, cheese, pancetta, and pepper.",
+            category: italian,
+            serving: 4,
+            time: 30,
+            ingredients: [
+                RecipeIngredient(ingredient: spaghetti, quantity: "400g"),
+                RecipeIngredient(ingredient: eggs, quantity: "4"),
+                RecipeIngredient(ingredient: parmesanCheese, quantity: "1 cup, grated"),
+                RecipeIngredient(ingredient: pancetta, quantity: "200g, diced"),
+                RecipeIngredient(ingredient: blackPepper, quantity: "To taste")
+            ],
+            instructions: "Cook spaghetti. Fry pancetta until crisp. Whisk eggs and Parmesan, add to pasta with pancetta, and season with black pepper.",
+            imageData: UIImage(named: "spaghettiCarbonara")?.pngData()
+        )
 
-    let hummus = MockRecipe(
-      name: "Classic Hummus",
-      summary: "A creamy and flavorful Middle Eastern dip made from chickpeas, tahini, and spices.",
-      category: middleEastern,
-      serving: 6,
-      time: 10,
-      ingredients: [
-        MockRecipeIngredient(ingredient: chickpeas, quantity: "1 can (15 oz)"),
-        MockRecipeIngredient(ingredient: tahini, quantity: "1/4 cup"),
-        MockRecipeIngredient(ingredient: lemonJuice, quantity: "3 tablespoons"),
-        MockRecipeIngredient(ingredient: garlic, quantity: "1 clove, minced"),
-        MockRecipeIngredient(ingredient: extraVirginOliveOil, quantity: "2 tablespoons"),
-        MockRecipeIngredient(ingredient: cumin, quantity: "1/2 teaspoon"),
-        MockRecipeIngredient(ingredient: salt, quantity: "To taste"),
-        MockRecipeIngredient(ingredient: water, quantity: "2-3 tablespoons"),
-        MockRecipeIngredient(ingredient: paprika, quantity: "For garnish"),
-        MockRecipeIngredient(ingredient: parsley, quantity: "For garnish"),
-      ],
-      instructions: "Blend chickpeas, tahini, lemon juice, garlic, and spices. Adjust consistency with water. Garnish with olive oil, paprika, and parsley.",
-      imageData: UIImage(named: "hummus")?.pngData()
-    )
+        let hummus = Recipe(
+            name: "Classic Hummus",
+            summary: "A creamy and flavorful Middle Eastern dip made from chickpeas, tahini, and spices.",
+            category: middleEastern,
+            serving: 6,
+            time: 10,
+            ingredients: [
+                RecipeIngredient(ingredient: chickpeas, quantity: "1 can (15 oz)"),
+                RecipeIngredient(ingredient: tahini, quantity: "1/4 cup"),
+                RecipeIngredient(ingredient: lemonJuice, quantity: "3 tablespoons"),
+                RecipeIngredient(ingredient: garlic, quantity: "1 clove, minced"),
+                RecipeIngredient(ingredient: extraVirginOliveOil, quantity: "2 tablespoons"),
+                RecipeIngredient(ingredient: cumin, quantity: "1/2 teaspoon"),
+                RecipeIngredient(ingredient: salt, quantity: "To taste"),
+                RecipeIngredient(ingredient: water, quantity: "2-3 tablespoons"),
+                RecipeIngredient(ingredient: paprika, quantity: "For garnish"),
+                RecipeIngredient(ingredient: parsley, quantity: "For garnish")
+            ],
+            instructions: "Blend chickpeas, tahini, lemon juice, garlic, and spices. Adjust consistency with water. Garnish with olive oil, paprika, and parsley.",
+            imageData: UIImage(named: "hummus")?.pngData()
+        )
 
-    let falafel = MockRecipe(
-      name: "Classic Falafel",
-      summary: "A traditional Middle Eastern dish of spiced, fried chickpea balls, often served in pita bread.",
-      category: middleEastern,
-      serving: 4,
-      time: 60,
-      ingredients: [
-        MockRecipeIngredient(ingredient: driedChickpeas, quantity: "1 cup"),
-        MockRecipeIngredient(ingredient: onions, quantity: "1 medium, chopped"),
-        MockRecipeIngredient(ingredient: garlic, quantity: "3 cloves, minced"),
-        MockRecipeIngredient(ingredient: cilantro, quantity: "1/2 cup, chopped"),
-        MockRecipeIngredient(ingredient: parsley, quantity: "1/2 cup, chopped"),
-        MockRecipeIngredient(ingredient: cumin, quantity: "1 tsp"),
-        MockRecipeIngredient(ingredient: coriander, quantity: "1 tsp"),
-        MockRecipeIngredient(ingredient: salt, quantity: "1 tsp"),
-        MockRecipeIngredient(ingredient: bakingPowder, quantity: "1/2 tsp"),
-      ],
-      instructions: "Soak chickpeas overnight. Blend with onions, garlic, herbs, and spices. Form into balls, add baking powder, and fry until golden.",
-      imageData: UIImage(named: "falafel")?.pngData()
-    )
+        // Insert Ingredients, Categories, and Recipes into Context
+        let allItems: [any PersistentModel] = [pizzaDough, tomatoSauce, mozzarellaCheese, freshBasilLeaves, extraVirginOliveOil, salt, chickpeas, tahini, lemonJuice, garlic, cumin, water, paprika, parsley, spaghetti, eggs, parmesanCheese, pancetta, blackPepper, driedChickpeas, onions, cilantro, coriander, bakingPowder, chickenThighs, yogurt, cardamom, cinnamon, turmeric, italian, middleEastern, margherita, spaghettiCarbonara, hummus]
 
-    let shawarma = MockRecipe(
-      name: "Chicken Shawarma",
-      summary: "A popular Middle Eastern dish featuring marinated chicken, slow-roasted to perfection.",
-      category: middleEastern,
-      serving: 4,
-      time: 120,
-      ingredients: [
-        MockRecipeIngredient(ingredient: chickenThighs, quantity: "1 kg, boneless"),
-        MockRecipeIngredient(ingredient: yogurt, quantity: "1 cup"),
-        MockRecipeIngredient(ingredient: garlic, quantity: "3 cloves, minced"),
-        MockRecipeIngredient(ingredient: lemonJuice, quantity: "3 tablespoons"),
-        MockRecipeIngredient(ingredient: cumin, quantity: "1 tsp"),
-        MockRecipeIngredient(ingredient: coriander, quantity: "1 tsp"),
-        MockRecipeIngredient(ingredient: cardamom, quantity: "1/2 tsp"),
-        MockRecipeIngredient(ingredient: cinnamon, quantity: "1/2 tsp"),
-        MockRecipeIngredient(ingredient: turmeric, quantity: "1/2 tsp"),
-        MockRecipeIngredient(ingredient: salt, quantity: "To taste"),
-        MockRecipeIngredient(ingredient: blackPepper, quantity: "To taste"),
-        MockRecipeIngredient(ingredient: extraVirginOliveOil, quantity: "2 tablespoons"),
-      ],
-      instructions: "Marinate chicken with yogurt, spices, garlic, lemon juice, and olive oil. Roast until cooked. Serve with pita and sauces.",
-      imageData: UIImage(named: "chickenShawarma")?.pngData()
-    )
-    
-    italian.recipes = [
-      margherita,
-      spaghettiCarbonara,
-    ]
-    middleEastern.recipes = [
-      hummus,
-      falafel,
-      shawarma,
-    ]
-
-    categories = [
-      italian,
-      middleEastern,
-    ]
-
-    recipes = [
-      margherita,
-      spaghettiCarbonara,
-      hummus,
-      falafel,
-      shawarma,
-    ]
-  }
+        allItems.forEach { modelContext.insert($0) }
+    }
 
   // MARK: - Categories
 
-  func addCategory(name: String) throws {
-    guard categories.contains(where: { $0.name == name }) == false else {
-      throw Error.categoryExists
-    }
-    categories.append(MockCategory(name: name))
-  }
+    func addCategory(name: String) throws {
+        // Check if the category already exists
+        guard fetchCategories().contains(where: { $0.name == name }) == false else {
+            throw Error.categoryExists
+        }
 
-  func deleteCategory(id: MockCategory.ID) {
-    categories.removeAll(where: { $0.id == id })
-    for (index, recipe) in recipes.enumerated() where recipe.category?.id == id {
-      recipes[index].category = nil
+        // Create and insert the new category
+        let newCategory = Category(name: name)
+        modelContext.insert(newCategory)
     }
-  }
 
-  func updateCategory(id: MockCategory.ID, name: String) throws {
-    guard categories.contains(where: { $0.name == name && $0.id != id }) == false else {
-      throw Error.categoryExists
+    // Delete an existing category
+    func deleteCategory(id: UUID) {
+        guard let category = fetchCategories().first(where: { $0.id == id}) else { return }
+        modelContext.delete(category)
+
+        // Remove category references from recipes
+        let recipesWithCategory = fetchRecipes().filter { $0.category?.id == id }
+        for recipe in recipesWithCategory {
+            recipe.category = nil
+        }
     }
-    guard let index = categories.firstIndex(where: { $0.id == id }) else {
-      return
+
+    // Update an existing category
+    func updateCategory(id: UUID, name: String) throws {
+        guard fetchCategories().contains(where: { $0.name == name && $0.id != id }) == false else {
+            throw Error.categoryExists
+        }
+        guard let category = fetchCategories().first(where: { $0.id == id }) else { return }
+        category.name = name
     }
-    categories[index].name = name
-    for (index, recipe) in recipes.enumerated() where recipe.category?.id == id {
-      recipes[index].category?.name = name
-    }
-  }
 
   // MARK: - Ingredients
 
