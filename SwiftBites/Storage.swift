@@ -199,105 +199,140 @@ final class Storage {
 
   // MARK: - Ingredients
 
-  func addIngredient(name: String) throws {
-    guard ingredients.contains(where: { $0.name == name }) == false else {
-      throw Error.ingredientExists
+    func addIngredient(name: String) throws {
+      guard fetchIngredients().contains(where: { $0.name == name }) == false else {
+          throw Error.ingredientExists
+      }
+      modelContext.insert(Ingredient(name: name))
     }
-    ingredients.append(MockIngredient(name: name))
-  }
 
-  func deleteIngredient(id: MockIngredient.ID) {
-    ingredients.removeAll(where: { $0.id == id })
-  }
+    func deleteIngredient(id: UUID) {
+        // Find the ingredient by ID
+        guard let ingredient = fetchIngredients().first(where: { $0.id == id }) else {
+            return // Exit if no matching ingredient is found
+        }
 
-  func updateIngredient(id: MockIngredient.ID, name: String) throws {
-    guard ingredients.contains(where: { $0.name == name && $0.id != id }) == false else {
-      throw Error.ingredientExists
+        // Delete the ingredient from the model context
+        modelContext.delete(ingredient)
     }
-    guard let index = ingredients.firstIndex(where: { $0.id == id }) else {
-      return
+
+    func updateIngredient(id: UUID, name: String) throws {
+        // Check if an ingredient with the same name already exists (but with a different ID)
+        guard fetchIngredients().contains(where: { $0.name == name && $0.id != id }) == false else {
+            throw Error.ingredientExists
+        }
+
+        // Find the ingredient by ID
+        guard let ingredient = fetchIngredients().first(where: { $0.id == id }) else {
+            return // Exit if no matching ingredient is found
+        }
+
+        // Update the ingredient's name
+        ingredient.name = name
     }
-    ingredients[index].name = name
-  }
 
   // MARK: - Recipes
 
-  func addRecipe(
-    name: String,
-    summary: String,
-    category: MockCategory?,
-    serving: Int,
-    time: Int,
-    ingredients: [MockRecipeIngredient],
-    instructions: String,
-    imageData: Data?
-  ) throws {
-    guard recipes.contains(where: { $0.name == name }) == false else {
-      throw Error.recipeExists
+    func addRecipe(
+        name: String,
+        summary: String,
+        category: Category?,
+        serving: Int,
+        time: Int,
+        ingredients: [RecipeIngredient],
+        instructions: String,
+        imageData: Data?
+    ) throws {
+        // Check if a recipe with the same name already exists
+        guard fetchRecipes().contains(where: { $0.name == name }) == false else {
+            throw Error.recipeExists
+        }
+        
+        // Create the new Recipe object
+        let newRecipe = Recipe(
+            name: name,
+            summary: summary,
+            category: category,
+            serving: serving,
+            time: time,
+            ingredients: ingredients,
+            instructions: instructions,
+            imageData: imageData
+        )
+        
+        // Insert the new recipe into the model context
+        modelContext.insert(newRecipe)
+        
+        // Associate the recipe with the category, if provided
+        if let category = category {
+            category.recipes.append(newRecipe)
+        }
     }
-    let recipe = MockRecipe(
-      name: name,
-      summary: summary,
-      category: category,
-      serving: serving,
-      time: time,
-      ingredients: ingredients,
-      instructions: instructions,
-      imageData: imageData
-    )
-    recipes.append(recipe)
-    if let category, let index = categories.firstIndex(where: { $0.id == category.id }) {
-      categories[index].recipes.append(recipe)
-    }
-  }
 
-  func deleteRecipe(id: MockRecipe.ID) {
-    recipes.removeAll(where: { $0.id == id })
-    for cIndex in categories.indices {
-      categories[cIndex].recipes.removeAll(where: { $0.id == id })
-    }
-  }
+    func deleteRecipe(id: UUID) {
+        // Find the recipe by its ID
+        guard let recipe = fetchRecipes().first(where: { $0.id == id }) else {
+            return // Exit if no matching recipe is found
+        }
 
-  func updateRecipe(
-    id: MockRecipe.ID,
-    name: String,
-    summary: String,
-    category: MockCategory?,
-    serving: Int,
-    time: Int,
-    ingredients: [MockRecipeIngredient],
-    instructions: String,
-    imageData: Data?
-  ) throws {
-    guard recipes.contains(where: { $0.name == name && $0.id != id }) == false else {
-      throw Error.recipeExists
+        // Remove the recipe from its associated category
+        if let category = recipe.category {
+            category.recipes.removeAll(where: { $0.id == id })
+        }
+
+        // Delete the recipe from the model context
+        modelContext.delete(recipe)
     }
-    guard let index = recipes.firstIndex(where: { $0.id == id }) else {
-      return
+
+    func updateRecipe(
+        id: UUID,
+        name: String,
+        summary: String,
+        category: Category?,
+        serving: Int,
+        time: Int,
+        ingredients: [RecipeIngredient],
+        instructions: String,
+        imageData: Data?
+    ) throws {
+        // Ensure no duplicate recipe name exists, except for the one being updated
+        guard fetchRecipes().contains(where: { $0.name == name && $0.id != id }) == false else {
+            throw Error.recipeExists
+        }
+
+        // Find the recipe by its ID
+        guard let recipe = fetchRecipes().first(where: { $0.id == id }) else {
+            return // Exit if no matching recipe is found
+        }
+
+        // Update the recipe's properties
+        recipe.name = name
+        recipe.summary = summary
+        recipe.category = category
+        recipe.serving = serving
+        recipe.time = time
+        recipe.ingredients = ingredients
+        recipe.instructions = instructions
+        recipe.imageData = imageData
+
+        // Update the category association
+        if let category = category {
+            if !category.recipes.contains(where: { $0.id == recipe.id }) {
+                category.recipes.append(recipe)
+            }
+        }
     }
-    let recipe = MockRecipe(
-      id: id,
-      name: name,
-      summary: summary,
-      category: category,
-      serving: serving,
-      time: time,
-      ingredients: ingredients,
-      instructions: instructions,
-      imageData: imageData
-    )
-    recipes[index] = recipe
-    for cIndex in categories.indices {
-      categories[cIndex].recipes.removeAll(where: { $0.id == id })
-    }
-    if let cIndex = categories.firstIndex(where: { $0.id == category?.id }) {
-      categories[cIndex].recipes.append(recipe)
-    }
-  }
 }
 
 struct StorageKey: EnvironmentKey {
-  static let defaultValue = Storage()
+    static var defaultValue: Storage {
+        if let modelContainer = try? ModelContainer(for: Ingredient.self, Category.self, Recipe.self) {
+            return Storage(context: modelContainer.mainContext)
+        } else {
+            // Provide a fallback empty ModelContext
+            return Storage(context: ModelContext(<#ModelContainer#>))
+        }
+    }
 }
 
 extension EnvironmentValues {
