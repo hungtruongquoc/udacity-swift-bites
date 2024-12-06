@@ -201,6 +201,7 @@ final class Storage {
         let recipesWithCategory = fetchRecipes().filter { $0.category?.id == id }
         for recipe in recipesWithCategory {
             recipe.category = nil
+            try? context.save()
         }
     }
 
@@ -249,6 +250,7 @@ final class Storage {
 
         // Update the ingredient's name
         ingredient.name = name
+        try? context.save()
     }
 
   // MARK: - Recipes
@@ -287,6 +289,7 @@ final class Storage {
         // Associate the recipe with the category, if provided
         if let category = category {
             category.recipes.append(newRecipe)
+            try? context.save()
         }
     }
 
@@ -317,32 +320,59 @@ final class Storage {
         instructions: String,
         imageData: Data?
     ) throws {
-        // Ensure no duplicate recipe name exists, except for the one being updated
+        let context = try! requireContext()
         guard fetchRecipes().contains(where: { $0.name == name && $0.id != id }) == false else {
             throw Error.recipeExists
         }
 
-        // Find the recipe by its ID
         guard let recipe = fetchRecipes().first(where: { $0.id == id }) else {
-            return // Exit if no matching recipe is found
+            return
         }
 
-        // Update the recipe's properties
+        // Remove recipe from old category if it exists
+        if let oldCategory = recipe.category {
+            oldCategory.recipes.removeAll(where: { $0.id == recipe.id })
+        }
+
+        // Update recipe properties
         recipe.name = name
         recipe.summary = summary
-        recipe.category = category
         recipe.serving = serving
         recipe.time = time
         recipe.ingredients = ingredients
         recipe.instructions = instructions
         recipe.imageData = imageData
-
-        // Update the category association
-        if let category = category {
-            if !category.recipes.contains(where: { $0.id == recipe.id }) {
-                category.recipes.append(recipe)
+        
+        // Handle category change
+        recipe.category = category
+        if let newCategory = category {
+            // Only append if not already in the category's recipes
+            if !newCategory.recipes.contains(where: { $0.id == recipe.id }) {
+                newCategory.recipes.append(recipe)
             }
         }
+        
+        try? context.save()  // Save after updating relationships
+    }
+    
+    func updateRecipeCategory(recipeId: UUID, newCategory: Category?) {
+        let context = try! requireContext()
+        guard let recipe = fetchRecipes().first(where: { $0.id == recipeId }) else {
+            return
+        }
+        
+        // Remove from old category
+        if let oldCategory = recipe.category {
+            oldCategory.recipes.removeAll(where: { $0.id == recipe.id })
+        }
+        
+        // Add to new category
+        recipe.category = newCategory
+        if let newCategory = newCategory {
+            newCategory.recipes.append(recipe)
+        }
+        
+        try? context.save()
     }
 }
 

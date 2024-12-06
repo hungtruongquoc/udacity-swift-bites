@@ -62,7 +62,7 @@ class Ingredient: Identifiable {
 @Model
 class Category: Identifiable {
     @Attribute(.unique) var name: String
-    @Relationship(deleteRule: .nullify) var recipes: [Recipe] = []
+    @Relationship(deleteRule: .nullify, inverse: \Recipe.category) var recipes: [Recipe] = []
     var id: UUID
 
     init(id: UUID = UUID(), name: String) {
