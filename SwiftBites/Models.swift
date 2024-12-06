@@ -8,7 +8,7 @@ class Recipe: Identifiable {
     @Relationship var category: Category?
     var serving: Int
     var time: Int
-    var ingredients: [RecipeIngredient] = []
+    @Relationship(deleteRule: .cascade) var ingredients: [RecipeIngredient] = []
     var instructions: String
     var imageData: Data?
     var id: UUID

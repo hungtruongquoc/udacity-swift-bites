@@ -31,16 +31,16 @@ struct CategoriesView: View {
   @ViewBuilder
   private var content: some View {
       if storage.fetchCategories().isEmpty {
-      empty
-    } else {
+          empty
+      } else {
         list(for: storage.fetchCategories().filter {
-        if query.isEmpty {
-          return true
-        } else {
-          return $0.name.localizedStandardContains(query)
-        }
-      })
-    }
+            if query.isEmpty {
+              return true
+            } else {
+              return $0.name.localizedStandardContains(query)
+            }
+        })
+      }
   }
 
   private var empty: some View {
@@ -68,15 +68,16 @@ struct CategoriesView: View {
   }
 
   private func list(for categories: [Category]) -> some View {
-    ScrollView(.vertical) {
-      if categories.isEmpty {
-        noResults
-      } else {
-        LazyVStack(spacing: 10) {
-          ForEach(categories, content: CategorySection.init)
-        }
+      print("list(for:) called with categories: \(categories.map(\.name))")
+      return ScrollView(.vertical) {
+          if categories.isEmpty {
+            noResults
+          } else {
+            LazyVStack(spacing: 10) {
+              ForEach(categories, content: CategorySection.init)
+            }
+          }
       }
-    }
-    .searchable(text: $query)
+      .searchable(text: $query)
   }
 }
