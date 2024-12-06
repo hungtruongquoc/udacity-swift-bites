@@ -99,7 +99,9 @@ struct RecipesView: View {
         noResults
       } else {
         LazyVStack(spacing: 10) {
-            ForEach<[Recipe], UUID, Any>(recipes, content: RecipeCell.init)
+            ForEach(recipes, id: \.id) { recipe in
+                RecipeCell(recipe: recipe)
+            }
         }
       }
     }

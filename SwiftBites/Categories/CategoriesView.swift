@@ -11,7 +11,7 @@ struct CategoriesView: View {
       content
         .navigationTitle("Categories")
         .toolbar {
-            if !(storage?.fetchCategories().isEmpty ?? true) {
+            if !(storage.fetchCategories().isEmpty) {
                 NavigationLink(value: CategoryForm.Mode.add) {
                     Label("Add", systemImage: "plus")
                 }
@@ -30,10 +30,10 @@ struct CategoriesView: View {
 
   @ViewBuilder
   private var content: some View {
-    if storage.categories.isEmpty {
+      if storage.fetchCategories().isEmpty {
       empty
     } else {
-      list(for: storage.categories.filter {
+        list(for: storage.fetchCategories().filter {
         if query.isEmpty {
           return true
         } else {

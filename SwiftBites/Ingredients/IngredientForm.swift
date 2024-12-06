@@ -3,7 +3,7 @@ import SwiftUI
 struct IngredientForm: View {
   enum Mode: Hashable {
     case add
-    case edit(MockIngredient)
+      case edit(Ingredient)
   }
 
   var mode: Mode
@@ -66,7 +66,7 @@ struct IngredientForm: View {
 
   // MARK: - Data
 
-  private func delete(ingredient: MockIngredient) {
+    private func delete(ingredient: Ingredient) {
     storage.deleteIngredient(id: ingredient.id)
     dismiss()
   }
