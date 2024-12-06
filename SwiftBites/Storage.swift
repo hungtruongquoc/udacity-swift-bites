@@ -9,59 +9,73 @@ import SwiftData
 
 @Observable
 final class Storage {
-    private let modelContext: ModelContext
+    private let modelContext: ModelContext?
     
   enum Error: LocalizedError {
     case ingredientExists
     case categoryExists
     case recipeExists
+    case missingContext
 
     var errorDescription: String? {
       switch self {
-      case .ingredientExists:
-        return "Ingredient with the same name exists"
-      case .categoryExists:
-        return "Category with the same name exists"
-      case .recipeExists:
-        return "Recipe with the same name exists"
+          case .ingredientExists:
+            return "Ingredient with the same name exists"
+          case .categoryExists:
+            return "Category with the same name exists"
+          case .recipeExists:
+            return "Recipe with the same name exists"
+        case .missingContext:
+          return "Missing ModelContext"
       }
     }
   }
 
-    init(context: ModelContext) {
+    init(context: ModelContext?) {
         modelContext = context
+    }
+    
+    private func requireContext() throws -> ModelContext {
+        guard let context = modelContext else {
+            throw Error.missingContext
+        }
+        return context
     }
 
     // Fetch Ingredients
     func fetchIngredients() -> [Ingredient] {
+        let context = try! requireContext()
         let fetchDescriptor = FetchDescriptor<Ingredient>(sortBy: [SortDescriptor(\.name)])
-        return (try? modelContext.fetch(fetchDescriptor)) ?? []
+        return (try? context.fetch(fetchDescriptor)) ?? []
     }
 
     // Fetch Categories
     func fetchCategories() -> [Category] {
+        let context = try! requireContext()
         let fetchDescriptor = FetchDescriptor<Category>(sortBy: [SortDescriptor(\.name)])
-        return (try? modelContext.fetch(fetchDescriptor)) ?? []
+        return (try? context.fetch(fetchDescriptor)) ?? []
     }
 
     // Fetch Recipes
     func fetchRecipes() -> [Recipe] {
+        let context = try! requireContext()
         let fetchDescriptor = FetchDescriptor<Recipe>(sortBy: [SortDescriptor(\.name)])
-        return (try? modelContext.fetch(fetchDescriptor)) ?? []
+        return (try? context.fetch(fetchDescriptor)) ?? []
     }
     
   // MARK: - Load
 
     func load() {
+        let context = try! requireContext()
         // Clear existing data to avoid duplication
         for ingredient in fetchIngredients() {
-            modelContext.delete(ingredient)
+            context.delete(ingredient)
         }
         for category in fetchCategories() {
-            modelContext.delete(category)
+            context.delete(category)
         }
         for recipe in fetchRecipes() {
-            modelContext.delete(recipe)
+            context.delete(recipe)
         }
 
         // Add Ingredients
@@ -160,12 +174,13 @@ final class Storage {
         // Insert Ingredients, Categories, and Recipes into Context
         let allItems: [any PersistentModel] = [pizzaDough, tomatoSauce, mozzarellaCheese, freshBasilLeaves, extraVirginOliveOil, salt, chickpeas, tahini, lemonJuice, garlic, cumin, water, paprika, parsley, spaghetti, eggs, parmesanCheese, pancetta, blackPepper, driedChickpeas, onions, cilantro, coriander, bakingPowder, chickenThighs, yogurt, cardamom, cinnamon, turmeric, italian, middleEastern, margherita, spaghettiCarbonara, hummus]
 
-        allItems.forEach { modelContext.insert($0) }
+        allItems.forEach { context.insert($0) }
     }
 
   // MARK: - Categories
 
     func addCategory(name: String) throws {
+        let context = try! requireContext()
         // Check if the category already exists
         guard fetchCategories().contains(where: { $0.name == name }) == false else {
             throw Error.categoryExists
@@ -173,13 +188,14 @@ final class Storage {
 
         // Create and insert the new category
         let newCategory = Category(name: name)
-        modelContext.insert(newCategory)
+        context.insert(newCategory)
     }
 
     // Delete an existing category
     func deleteCategory(id: UUID) {
+        let context = try! requireContext()
         guard let category = fetchCategories().first(where: { $0.id == id}) else { return }
-        modelContext.delete(category)
+        context.delete(category)
 
         // Remove category references from recipes
         let recipesWithCategory = fetchRecipes().filter { $0.category?.id == id }
@@ -190,6 +206,7 @@ final class Storage {
 
     // Update an existing category
     func updateCategory(id: UUID, name: String) throws {
+        let context = try! requireContext()
         guard fetchCategories().contains(where: { $0.name == name && $0.id != id }) == false else {
             throw Error.categoryExists
         }
@@ -200,23 +217,26 @@ final class Storage {
   // MARK: - Ingredients
 
     func addIngredient(name: String) throws {
+        let context = try! requireContext()
       guard fetchIngredients().contains(where: { $0.name == name }) == false else {
           throw Error.ingredientExists
       }
-      modelContext.insert(Ingredient(name: name))
+        context.insert(Ingredient(name: name))
     }
 
     func deleteIngredient(id: UUID) {
+        let context = try! requireContext()
         // Find the ingredient by ID
         guard let ingredient = fetchIngredients().first(where: { $0.id == id }) else {
             return // Exit if no matching ingredient is found
         }
 
         // Delete the ingredient from the model context
-        modelContext.delete(ingredient)
+        context.delete(ingredient)
     }
 
     func updateIngredient(id: UUID, name: String) throws {
+        let context = try! requireContext()
         // Check if an ingredient with the same name already exists (but with a different ID)
         guard fetchIngredients().contains(where: { $0.name == name && $0.id != id }) == false else {
             throw Error.ingredientExists
@@ -243,6 +263,7 @@ final class Storage {
         instructions: String,
         imageData: Data?
     ) throws {
+        let context = try! requireContext()
         // Check if a recipe with the same name already exists
         guard fetchRecipes().contains(where: { $0.name == name }) == false else {
             throw Error.recipeExists
@@ -261,7 +282,7 @@ final class Storage {
         )
         
         // Insert the new recipe into the model context
-        modelContext.insert(newRecipe)
+        context.insert(newRecipe)
         
         // Associate the recipe with the category, if provided
         if let category = category {
@@ -270,6 +291,7 @@ final class Storage {
     }
 
     func deleteRecipe(id: UUID) {
+        let context = try! requireContext()
         // Find the recipe by its ID
         guard let recipe = fetchRecipes().first(where: { $0.id == id }) else {
             return // Exit if no matching recipe is found
@@ -281,7 +303,7 @@ final class Storage {
         }
 
         // Delete the recipe from the model context
-        modelContext.delete(recipe)
+        context.delete(recipe)
     }
 
     func updateRecipe(
