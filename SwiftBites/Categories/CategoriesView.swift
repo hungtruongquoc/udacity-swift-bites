@@ -11,11 +11,11 @@ struct CategoriesView: View {
       content
         .navigationTitle("Categories")
         .toolbar {
-          if !storage.categories.isEmpty {
-            NavigationLink(value: CategoryForm.Mode.add) {
-              Label("Add", systemImage: "plus")
+            if !(storage?.fetchCategories().isEmpty ?? true) {
+                NavigationLink(value: CategoryForm.Mode.add) {
+                    Label("Add", systemImage: "plus")
+                }
             }
-          }
         }
         .navigationDestination(for: CategoryForm.Mode.self) { mode in
           CategoryForm(mode: mode)
@@ -67,7 +67,7 @@ struct CategoriesView: View {
     )
   }
 
-  private func list(for categories: [MockCategory]) -> some View {
+  private func list(for categories: [Category]) -> some View {
     ScrollView(.vertical) {
       if categories.isEmpty {
         noResults

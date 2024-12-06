@@ -325,19 +325,12 @@ final class Storage {
 }
 
 struct StorageKey: EnvironmentKey {
-    static var defaultValue: Storage {
-        if let modelContainer = try? ModelContainer(for: Ingredient.self, Category.self, Recipe.self) {
-            return Storage(context: modelContainer.mainContext)
-        } else {
-            // Provide a fallback empty ModelContext
-            return Storage(context: ModelContext(<#ModelContainer#>))
-        }
-    }
+    static var defaultValue: Storage? = nil
 }
 
 extension EnvironmentValues {
-  var storage: Storage {
-    get { self[StorageKey.self] }
-    set { self[StorageKey.self] = newValue }
-  }
+    var storage: Storage? {
+        get { self[StorageKey.self] }
+        set { self[StorageKey.self] = newValue }
+    }
 }
