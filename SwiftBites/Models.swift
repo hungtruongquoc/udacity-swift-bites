@@ -5,7 +5,7 @@ import SwiftData
 class Recipe: Identifiable {
     @Attribute(.unique) var name: String
     var summary: String
-    var category: Category?
+    @Relationship var category: Category?
     var serving: Int
     var time: Int
     var ingredients: [RecipeIngredient] = []
@@ -62,7 +62,7 @@ class Ingredient: Identifiable {
 @Model
 class Category: Identifiable {
     @Attribute(.unique) var name: String
-    var recipes: [Recipe] = []
+    @Relationship(deleteRule: .nullify) var recipes: [Recipe] = []
     var id: UUID
 
     init(id: UUID = UUID(), name: String) {
