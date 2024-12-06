@@ -347,11 +347,11 @@ final class Storage {
 }
 
 struct StorageKey: EnvironmentKey {
-    static var defaultValue: Storage? = nil
+    static var defaultValue: Storage = Storage(context: nil)
 }
 
 extension EnvironmentValues {
-    var storage: Storage? {
+    var storage: Storage {
         get { self[StorageKey.self] }
         set { self[StorageKey.self] = newValue }
     }
