@@ -1,8 +1,11 @@
 import SwiftUI
+import SwiftData
+
 
 struct CategoriesView: View {
     @Environment(\.storage) private var storage
-    @State private var queryResults: [Category] = [] // State to hold queried categories
+    @Query(sort: \Category.name, order: .forward) private var queryResults: [Category]
+    @State private var refreshTrigger: UUID = UUID()
     @State private var query = ""
 
     // MARK: - Body
@@ -10,23 +13,21 @@ struct CategoriesView: View {
     var body: some View {
         NavigationStack {
             content
-                .navigationTitle("Categories")
-                .toolbar {
-                    if !queryResults.isEmpty {
-                        NavigationLink(value: CategoryForm.Mode.add) {
-                            Label("Add", systemImage: "plus")
-                        }
+            .navigationTitle("Categories")
+            .toolbar {
+                if !queryResults.isEmpty {
+                    NavigationLink(value: CategoryForm.Mode.add) {
+                        Label("Add", systemImage: "plus")
                     }
                 }
-                .navigationDestination(for: CategoryForm.Mode.self) { mode in
-                    CategoryForm(mode: mode)
-                }
-                .navigationDestination(for: RecipeForm.Mode.self) { mode in
-                    RecipeForm(mode: mode)
-                }
-                .onAppear {
-                    loadCategories() // Load categories when the view appears
-                }
+            }
+            .navigationDestination(for: CategoryForm.Mode.self) { mode in
+                CategoryForm(mode: mode)
+            }
+            .navigationDestination(for: RecipeForm.Mode.self) { mode in
+                RecipeForm(mode: mode)
+            }
+            .id(refreshTrigger)
         }
     }
 
@@ -77,27 +78,13 @@ struct CategoriesView: View {
                 noResults
             } else {
                 LazyVStack(spacing: 10) {
-                    ForEach(categories, content: CategorySection.init)
+                    ForEach(categories) { category in
+                        CategorySection(category: category)
+                            .id("\(category.id)-\(refreshTrigger)")  // Add this line
+                    }
                 }
             }
         }
         .searchable(text: $query, prompt: "Search categories")
-        .onChange(of: query) { oldQuery, newQuery in
-            filterCategories(by: newQuery)
-        }
-    }
-
-    // MARK: - Helper Methods
-
-    private func loadCategories() {
-        queryResults = storage.fetchCategories() // Load initial categories into queryResults
-    }
-
-    private func filterCategories(by query: String) {
-        if query.isEmpty {
-            queryResults = storage.fetchCategories() // Reload all categories if query is empty
-        } else {
-            queryResults = storage.fetchCategories().filter { $0.name.localizedStandardContains(query) }
-        }
     }
 }

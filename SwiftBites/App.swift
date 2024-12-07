@@ -13,6 +13,7 @@ struct SwiftBitesApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .modelContainer(modelContainer)
                 .environment(\.storage, Storage(context: modelContainer.mainContext))
         }
     }
