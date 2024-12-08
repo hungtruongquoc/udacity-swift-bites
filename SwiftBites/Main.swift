@@ -21,8 +21,5 @@ struct ContentView: View {
           Label("Ingredients", systemImage: "carrot")
         }
     }
-    .onAppear {
-      storage.load()
-    }
   }
 }
