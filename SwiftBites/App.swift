@@ -3,18 +3,27 @@ import SwiftData
 
 @main
 struct SwiftBitesApp: App {
-    // Set up the model container for your app
-    @State private var modelContainer =  {
-        let schema = Schema([Recipe.self, Ingredient.self, RecipeIngredient.self, Category.self])
-        let container: ModelContainer = try! ModelContainer(for: schema, configurations: [])
-        return container
+    var container: ModelContainer = {
+        let schema = Schema([
+            Category.self,
+            Ingredient.self,
+            Recipe.self,
+            RecipeIngredient.self
+        ])
+        let modelConfiguration = ModelConfiguration(schema: schema)
+
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Failed to create Model Container: \(error)")
+        }
     }()
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .modelContainer(modelContainer)
-                .environment(\.storage, Storage(context: modelContainer.mainContext))
+                .environment(\.storage, Storage(context: container.mainContext))
+                .modelContainer(container)
         }
     }
 }
