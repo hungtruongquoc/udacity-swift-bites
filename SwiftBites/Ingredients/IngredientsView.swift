@@ -12,6 +12,7 @@ struct IngredientsView: View {
   @Environment(\.storage) private var storage
   @Environment(\.dismiss) private var dismiss
   @State private var query = ""
+    @State private var ingredients: [Ingredient] = []
 
   // MARK: - Body
 
@@ -29,6 +30,9 @@ struct IngredientsView: View {
         .navigationDestination(for: IngredientForm.Mode.self) { mode in
           IngredientForm(mode: mode)
         }
+        .onAppear {
+            ingredients = storage.fetchIngredients()
+        }
     }
   }
 
@@ -36,10 +40,10 @@ struct IngredientsView: View {
 
   @ViewBuilder
   private var content: some View {
-    if storage.fetchIngredients().isEmpty {
+    if ingredients.isEmpty {
       empty
     } else {
-      list(for: storage.fetchIngredients().filter {
+        list(for: ingredients.filter {
         if query.isEmpty {
           return true
         } else {
