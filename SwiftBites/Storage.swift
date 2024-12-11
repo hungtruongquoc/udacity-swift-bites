@@ -157,19 +157,20 @@ final class Storage {
             throw Error.recipeExists
         }
         
-        // Create the new Recipe object
         let newRecipe = Recipe(
             name: name,
             summary: summary,
-            category: category,
+            category: nil,
             serving: serving,
             time: time,
-            ingredients: ingredients,
+            ingredients: [],
             instructions: instructions,
             imageData: imageData
         )
-        
-        // Insert the new recipe into the model context
+
+        // Assign category and ingredients after creation
+        newRecipe.category = category
+        newRecipe.ingredients = ingredients
         context.insert(newRecipe)
         
         // Associate the recipe with the category, if provided
