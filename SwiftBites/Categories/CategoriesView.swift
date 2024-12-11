@@ -1,53 +1,64 @@
 import SwiftUI
 import SwiftData
 
-
 struct CategoriesView: View {
-    @Environment(\.storage) private var storage
-    @Query(sort: \Category.name, order: .forward) private var queryResults: [Category]
+    @Environment(\.modelContext) private var modelContext
     @State private var refreshTrigger: UUID = UUID()
     @State private var query = ""
-
-    // MARK: - Body
-
+    
+    private var filteredCategories: [Category] {
+        let predicate = #Predicate<Category> {
+            $0.name.localizedStandardContains(query)
+        }
+        
+        let descriptor = FetchDescriptor<Category>(
+            predicate: query.isEmpty ? nil : predicate,
+            sortBy: [SortDescriptor(\.name, order: .forward)]
+        )
+        
+        do {
+            let filteredCategories = try modelContext.fetch(descriptor)
+            return filteredCategories
+        } catch {
+            return []
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             content
-            .navigationTitle("Categories")
-            .toolbar {
-                if !queryResults.isEmpty {
-                    NavigationLink(value: CategoryForm.Mode.add) {
-                        Label("Add", systemImage: "plus")
+                .navigationTitle("Categories")
+                .searchable(text: $query, prompt: "Search categories")
+                .toolbar {
+                    if !filteredCategories.isEmpty {
+                        NavigationLink(value: CategoryForm.Mode.add) {
+                            Label("Add", systemImage: "plus")
+                        }
                     }
                 }
-            }
-            .navigationDestination(for: CategoryForm.Mode.self) { mode in
-                CategoryForm(mode: mode)
-            }
-            .navigationDestination(for: RecipeForm.Mode.self) { mode in
-                RecipeForm(mode: mode)
-            }
-            .id(refreshTrigger)
+                .navigationDestination(for: CategoryForm.Mode.self) { mode in
+                    CategoryForm(mode: mode)
+                }
+                .navigationDestination(for: RecipeForm.Mode.self) { mode in
+                    RecipeForm(mode: mode)
+                }
+                .id(refreshTrigger)
         }
     }
-
-    // MARK: - Views
-
+    
     @ViewBuilder
     private var content: some View {
-        if queryResults.isEmpty {
-            empty
+        if filteredCategories.isEmpty {
+            if query.isEmpty {
+                empty
+            } else {
+                noResults
+            }
         } else {
-            list(for: queryResults.filter {
-                if query.isEmpty {
-                    return true
-                } else {
-                    return $0.name.localizedStandardContains(query)
-                }
-            })
+            list
         }
     }
-
+    
     private var empty: some View {
         ContentUnavailableView(
             label: {
@@ -63,7 +74,7 @@ struct CategoriesView: View {
             }
         )
     }
-
+    
     private var noResults: some View {
         ContentUnavailableView(
             label: {
@@ -71,20 +82,21 @@ struct CategoriesView: View {
             }
         )
     }
-
-    private func list(for categories: [Category]) -> some View {
-        return ScrollView(.vertical) {
-            if categories.isEmpty {
-                noResults
-            } else {
-                LazyVStack(spacing: 10) {
-                    ForEach(categories) { category in
-                        CategorySection(category: category)
-                            .id("\(category.id)-\(refreshTrigger)")  // Add this line
-                    }
+    
+    private var list: some View {
+        ScrollView(.vertical) {
+            LazyVStack(spacing: 10) {
+                ForEach(filteredCategories) { category in
+                    CategorySection(category: category)
+                        .id("\(category.id)-\(refreshTrigger)")
                 }
             }
         }
         .searchable(text: $query, prompt: "Search categories")
     }
+}
+
+#Preview {
+    CategoriesView()
+        .modelContainer(for: Category.self, inMemory: true)
 }
