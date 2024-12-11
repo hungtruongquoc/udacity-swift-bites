@@ -260,6 +260,20 @@ final class Storage {
         
         try? context.save()
     }
+    
+    func addRecipeIngredient(selectedIngredient: Ingredient, quantity: String) -> RecipeIngredient? {
+        let context = try! requireContext()
+        
+        guard let foundIngredient = fetchIngredients().first(where: { $0.id == selectedIngredient.id }) else {
+            return nil
+        }
+
+        let newRecipeIngredient = RecipeIngredient(ingredient: foundIngredient, quantity: quantity)
+        context.insert(newRecipeIngredient)
+        try? context.save()
+
+        return newRecipeIngredient
+    }
 }
 
 struct StorageKey: EnvironmentKey {
