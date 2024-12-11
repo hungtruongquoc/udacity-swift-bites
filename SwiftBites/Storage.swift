@@ -191,6 +191,8 @@ final class Storage {
         if let category = recipe.category {
             category.recipes.removeAll(where: { $0.id == id })
         }
+        
+        recipe.ingredients.removeAll()
 
         // Delete the recipe from the model context
         context.delete(recipe)
